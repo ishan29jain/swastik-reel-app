@@ -23,6 +23,7 @@ const ManagerDashboard = () => {
   const [operatorReels, setOperatorReels] = useState([]);
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [dropdownOptions, setDropdownOptions] = useState({ size: [], gsm: [], quality: [], mill: [] });
 
   const [form, setForm] = useState({
     reelNo: "",
@@ -146,6 +147,16 @@ const ManagerDashboard = () => {
   };
 
   useEffect(() => {
+    const fetchDropdownOptions = async () => {
+      const col = collection(db, "reelOptions");
+      const docs = await getDocs(col);
+      const opts = { size: [], gsm: [], quality: [], mill: [] };
+      docs.forEach((doc) => {
+        opts[doc.id.toLowerCase()] = doc.data().values;
+      });
+      setDropdownOptions(opts);
+    };
+    fetchDropdownOptions();
     fetchUnassignedReels();
     fetchRuledReels();
     fetchOperatorReels();
@@ -218,47 +229,63 @@ const ManagerDashboard = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">Size</label>
-                <input
+                <select
                   name="size"
-                  placeholder="e.g., 74 cm"
                   value={form.size}
                   onChange={handleFormChange}
                   required
                   className="input-field"
-                />
+                >
+                  <option value="">Select size</option>
+                  {dropdownOptions.size.map((option) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">GSM</label>
-                <input
+                <select
                   name="gsm"
-                  placeholder="e.g., 58"
                   value={form.gsm}
                   onChange={handleFormChange}
                   required
                   className="input-field"
-                />
+                >
+                  <option value="">Select GSM</option>
+                  {dropdownOptions.gsm.map((option) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">Quality</label>
-                <input
+                <select
                   name="quality"
-                  placeholder="Enter quality"
                   value={form.quality}
                   onChange={handleFormChange}
                   required
                   className="input-field"
-                />
+                >
+                  <option value="">Select quality</option>
+                  {dropdownOptions.quality.map((option) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">Mill Name</label>
-                <input
+                <select
                   name="mill"
-                  placeholder="Enter mill name"
                   value={form.mill}
                   onChange={handleFormChange}
                   required
                   className="input-field"
-                />
+                >
+                  <option value="">Select mill</option>
+                  {dropdownOptions.mill.map((option) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">Weight (kg)</label>

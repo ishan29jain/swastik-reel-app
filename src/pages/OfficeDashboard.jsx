@@ -11,6 +11,7 @@ import {
   updateDoc,
   deleteDoc,
   doc,
+  setDoc,
 } from "firebase/firestore";
 import { useRole } from "../context/RoleContext";
 import { useNavigate } from "react-router-dom";
@@ -35,6 +36,7 @@ const OfficeDashboard = () => {
   const [unassignedReels, setUnassignedReels] = useState([]);
   const [assignedReels, setAssignedReels] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [dropdownOptions, setDropdownOptions] = useState({ size: [], gsm: [], quality: [], mill: [] });
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -184,10 +186,31 @@ const OfficeDashboard = () => {
   };
 
   useEffect(() => {
+    const fetchDropdownOptions = async () => {
+      const col = collection(db, "reelOptions");
+      const docs = await getDocs(col);
+      const opts = { size: [], gsm: [], quality: [], mill: [] };
+      docs.forEach((doc) => {
+        opts[doc.id.toLowerCase()] = doc.data().values;
+      });
+      setDropdownOptions(opts);
+    };
+    fetchDropdownOptions();
     fetchRuledReels();
     fetchUnassignedReels();
     fetchAssignedReels();
   }, []);
+
+  const handleAddNewOption = async (type) => {
+    const newValue = prompt(`Enter new ${type}`);
+    if (!newValue) return;
+    const docRef = doc(db, "reelOptions", type);
+    const current = dropdownOptions[type] || [];
+    if (current.includes(newValue)) return alert("Already exists!");
+    const updated = [...current, newValue];
+    await setDoc(docRef, { values: updated });
+    setDropdownOptions((prev) => ({ ...prev, [type]: updated }));
+  };
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -301,47 +324,75 @@ const OfficeDashboard = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">Size</label>
-                <input
-                  name="size"
-                  placeholder="e.g., 74 cm"
-                  value={form.size}
-                  onChange={handleChange}
-                  required
-                  className="input-field"
-                />
+                <div className="flex gap-2">
+                  <select
+                    name="size"
+                    value={form.size}
+                    onChange={handleChange}
+                    required
+                    className="input-field"
+                  >
+                    <option value="">Select size</option>
+                    {dropdownOptions.size.map((option) => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                  <button type="button" className="btn-secondary" onClick={() => handleAddNewOption('size')}>Add New</button>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">GSM</label>
-                <input
-                  name="gsm"
-                  placeholder="e.g., 58"
-                  value={form.gsm}
-                  onChange={handleChange}
-                  required
-                  className="input-field"
-                />
+                <div className="flex gap-2">
+                  <select
+                    name="gsm"
+                    value={form.gsm}
+                    onChange={handleChange}
+                    required
+                    className="input-field"
+                  >
+                    <option value="">Select GSM</option>
+                    {dropdownOptions.gsm.map((option) => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                  <button type="button" className="btn-secondary" onClick={() => handleAddNewOption('gsm')}>Add New</button>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">Quality</label>
-                <input
-                  name="quality"
-                  placeholder="Enter quality"
-                  value={form.quality}
-                  onChange={handleChange}
-                  required
-                  className="input-field"
-                />
+                <div className="flex gap-2">
+                  <select
+                    name="quality"
+                    value={form.quality}
+                    onChange={handleChange}
+                    required
+                    className="input-field"
+                  >
+                    <option value="">Select quality</option>
+                    {dropdownOptions.quality.map((option) => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                  <button type="button" className="btn-secondary" onClick={() => handleAddNewOption('quality')}>Add New</button>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">Mill Name</label>
-                <input
-                  name="mill"
-                  placeholder="Enter mill name"
-                  value={form.mill}
-                  onChange={handleChange}
-                  required
-                  className="input-field"
-                />
+                <div className="flex gap-2">
+                  <select
+                    name="mill"
+                    value={form.mill}
+                    onChange={handleChange}
+                    required
+                    className="input-field"
+                  >
+                    <option value="">Select mill</option>
+                    {dropdownOptions.mill.map((option) => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                  <button type="button" className="btn-secondary" onClick={() => handleAddNewOption('mill')}>Add New</button>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">Weight (kg)</label>
