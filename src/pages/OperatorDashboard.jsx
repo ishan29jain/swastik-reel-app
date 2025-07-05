@@ -21,17 +21,19 @@ const OperatorDashboard = () => {
   const [formData, setFormData] = useState({});
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState({});
+  const [selectedReel, setSelectedReel] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
   const operatorId = "operator01";
 
   const fetchAssignedReels = async () => {
-    const q = query(collection(db, "reels"), where("assignedTo", "==", operatorId));
+    const q = query(collection(db, "reels"), where("assignedTo", "==", operatorId), where("ruledDate", "==", null));
     const querySnapshot = await getDocs(q);
     const data = [];
-    querySnapshot.forEach((doc) => {
-      const r = doc.data();
+    querySnapshot.forEach((docSnap) => {
+      const r = docSnap.data();
       if (!r.ruledDate) {
-        data.push({ id: doc.id, ...r });
+        data.push({ id: docSnap.id, ...r });
       }
     });
     setReels(data);
@@ -96,6 +98,19 @@ const OperatorDashboard = () => {
     window.location.href = "/";
   };
 
+  const markInProgress = async (reelId) => {
+    // Set all assigned reels' inProgress to false, then set selected to true
+    const q = query(collection(db, "reels"), where("assignedTo", "==", operatorId), where("ruledDate", "==", null));
+    const querySnapshot = await getDocs(q);
+    const batch = [];
+    querySnapshot.forEach((docSnap) => {
+      const ref = doc(db, "reels", docSnap.id);
+      batch.push(updateDoc(ref, { inProgress: docSnap.id === reelId }));
+    });
+    await Promise.all(batch);
+    fetchAssignedReels();
+  };
+
   return (
     <div className="min-h-screen bg-gray-900">
       {/* Header */}
@@ -131,150 +146,148 @@ const OperatorDashboard = () => {
           </div>
         )}
 
-        {/* Header Section */}
+        {/* Stock Reels List */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-white mb-2">Output Entry</h2>
-          <p className="text-gray-400">Enter production data for assigned reels</p>
-        </div>
-
-        {/* Reels Grid */}
-        {reels.length === 0 ? (
-          <div className="card">
+          <h2 className="text-xl font-bold text-white mb-4">Stock Reels</h2>
+          {reels.length === 0 ? (
             <div className="card-body text-center py-12">
               <div className="h-16 w-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="h-8 w-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-medium text-white mb-2">No Assigned Reels</h3>
+              <h3 className="text-lg font-medium text-white mb-2">No Stock Reels</h3>
               <p className="text-gray-400">You don't have any reels assigned to you at the moment.</p>
             </div>
-          </div>
-        ) : (
-          <div className="grid gap-6">
-            {reels.map((reel) => (
-              <div key={reel.id} className="card">
-                <div className="card-header">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="h-10 w-10 bg-blue-900 rounded-lg flex items-center justify-center">
-                        <span className="text-blue-400 font-semibold text-lg">{reel.reelNo}</span>
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-white">Reel {reel.reelNo}</h3>
-                        <p className="text-sm text-gray-400">{reel.mill}</p>
-                      </div>
-                    </div>
-                    <span className="badge-info">Pending</span>
-                  </div>
-                </div>
-                <div className="card-body">
-                  {/* Reel Details */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 p-4 bg-gray-700 rounded-lg">
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {reels.map((reel) => (
+                <div
+                  key={reel.id}
+                  className={`card cursor-pointer ${reel.inProgress ? 'bg-green-700 border-green-700' : 'hover:border-blue-400'}`}
+                >
+                  <div className="card-body flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-400">Size</p>
-                      <p className="text-sm text-white">{reel.size}</p>
+                      <div className="font-semibold text-white">{reel.reelNo}</div>
+                      <div className="text-gray-400 text-sm">Size: {reel.size} | GSM: {reel.gsm} | Quality: {reel.quality}</div>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-400">GSM</p>
-                      <p className="text-sm text-white">{reel.gsm}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-400">Weight</p>
-                      <p className="text-sm text-white">{reel.weight} kg</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-400">Quality</p>
-                      <p className="text-sm text-white">{reel.quality}</p>
-                    </div>
-                  </div>
-
-                  {/* Output Form */}
-                  <form onSubmit={(e) => handleSubmit(e, reel.id, reel)} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-1">
-                          Reams Produced
-                        </label>
-                        <input
-                          name="outputReams"
-                          placeholder="Enter reams"
-                          type="number"
-                          required
-                          onChange={(e) => handleChange(e, reel.id)}
-                          className="input-field"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-1">
-                          Loose Sheets
-                        </label>
-                        <input
-                          name="looseSheets"
-                          placeholder="Enter loose sheets"
-                          type="number"
-                          required
-                          onChange={(e) => handleChange(e, reel.id)}
-                          className="input-field"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-1">
-                          Output Length (cm)
-                        </label>
-                        <input
-                          name="outputLength"
-                          placeholder="Enter length"
-                          type="number"
-                          step="0.1"
-                          required
-                          onChange={(e) => handleChange(e, reel.id)}
-                          className="input-field"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-1">
-                          Output Width (cm)
-                        </label>
-                        <input
-                          name="outputWidth"
-                          placeholder="Enter width"
-                          type="number"
-                          step="0.1"
-                          required
-                          onChange={(e) => handleChange(e, reel.id)}
-                          className="input-field"
-                        />
-                      </div>
-                    </div>
-                    <div className="flex justify-end">
+                    {reel.inProgress ? (
                       <button
-                        type="submit"
-                        disabled={isLoading[reel.id]}
-                        className="btn-success flex items-center"
+                        className="btn-primary"
+                        onClick={() => { setSelectedReel(reel); setShowModal(true); }}
                       >
-                        {isLoading[reel.id] ? (
-                          <>
-                            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Saving...
-                          </>
-                        ) : (
-                          <>
-                            <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                            Save Output
-                          </>
-                        )}
+                        Enter Output
                       </button>
-                    </div>
-                  </form>
+                    ) : (
+                      <button
+                        className="btn-secondary"
+                        onClick={() => markInProgress(reel.id)}
+                        disabled={reels.some(r => r.inProgress)}
+                      >
+                        Mark In Progress
+                      </button>
+                    )}
+                  </div>
                 </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Modal for Reel Details and Output Entry */}
+        {showModal && selectedReel && selectedReel.inProgress && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+            <div className="bg-gray-800 rounded-lg shadow-lg w-full max-w-lg p-6 relative">
+              <button
+                className="absolute top-2 right-2 text-gray-400 hover:text-white"
+                onClick={() => { setShowModal(false); setSelectedReel(null); }}
+              >
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+              <h3 className="text-lg font-bold text-white mb-4">Reel {selectedReel.reelNo} Details</h3>
+              <div className="mb-4 grid grid-cols-2 gap-2">
+                <div><span className="text-gray-400">Mill:</span> <span className="text-white">{selectedReel.mill}</span></div>
+                <div><span className="text-gray-400">Size:</span> <span className="text-white">{selectedReel.size}</span></div>
+                <div><span className="text-gray-400">GSM:</span> <span className="text-white">{selectedReel.gsm}</span></div>
+                <div><span className="text-gray-400">Weight:</span> <span className="text-white">{selectedReel.weight} kg</span></div>
+                <div><span className="text-gray-400">Quality:</span> <span className="text-white">{selectedReel.quality}</span></div>
               </div>
-            ))}
+              <form onSubmit={(e) => handleSubmit(e, selectedReel.id, selectedReel)} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Reams Produced</label>
+                    <input
+                      name="outputReams"
+                      placeholder="Enter reams"
+                      type="number"
+                      required
+                      value={formData[selectedReel.id]?.outputReams || ""}
+                      onChange={(e) => handleChange(e, selectedReel.id)}
+                      className="input-field"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Loose Sheets</label>
+                    <input
+                      name="looseSheets"
+                      placeholder="Enter loose sheets"
+                      type="number"
+                      required
+                      value={formData[selectedReel.id]?.looseSheets || ""}
+                      onChange={(e) => handleChange(e, selectedReel.id)}
+                      className="input-field"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Output Length (cm)</label>
+                    <input
+                      name="outputLength"
+                      placeholder="Enter length"
+                      type="number"
+                      step="0.1"
+                      required
+                      value={formData[selectedReel.id]?.outputLength || ""}
+                      onChange={(e) => handleChange(e, selectedReel.id)}
+                      className="input-field"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Output Width (cm)</label>
+                    <input
+                      name="outputWidth"
+                      placeholder="Enter width"
+                      type="number"
+                      step="0.1"
+                      required
+                      value={formData[selectedReel.id]?.outputWidth || ""}
+                      onChange={(e) => handleChange(e, selectedReel.id)}
+                      className="input-field"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <button
+                    type="submit"
+                    disabled={isLoading[selectedReel.id]}
+                    className="btn-primary flex items-center justify-center"
+                  >
+                    {isLoading[selectedReel.id] ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Saving...
+                      </>
+                    ) : (
+                      "Save Output"
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         )}
       </div>

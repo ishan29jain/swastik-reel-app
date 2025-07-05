@@ -198,57 +198,6 @@ const ManagerDashboard = () => {
           </div>
         )}
 
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="card">
-            <div className="card-body">
-              <div className="flex items-center">
-                <div className="h-12 w-12 bg-blue-900 rounded-lg flex items-center justify-center">
-                  <svg className="h-6 w-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-400">Total Reels</p>
-                  <p className="text-2xl font-bold text-white">{totalReels}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="card">
-            <div className="card-body">
-              <div className="flex items-center">
-                <div className="h-12 w-12 bg-yellow-900 rounded-lg flex items-center justify-center">
-                  <svg className="h-6 w-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-400">In Progress</p>
-                  <p className="text-2xl font-bold text-white">{operatorReels.length}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="card">
-            <div className="card-body">
-              <div className="flex items-center">
-                <div className="h-12 w-12 bg-green-900 rounded-lg flex items-center justify-center">
-                  <svg className="h-6 w-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-400">Avg Yield</p>
-                  <p className="text-2xl font-bold text-white">{avgYield}%</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Add New Reel Form */}
         <div className="card mb-8">
           <div className="card-header">
@@ -373,7 +322,7 @@ const ManagerDashboard = () => {
                       <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                       </svg>
-                      Assign to Operator
+                      Add Stock
                     </button>
                   </div>
                 ))}
@@ -382,14 +331,14 @@ const ManagerDashboard = () => {
           </div>
         </div>
 
-        {/* Operator Reels */}
+        {/* Stock Reels */}
         <div className="card mb-8">
           <div className="card-header">
-            <h3 className="text-lg font-semibold text-white">Reels Currently with Operator</h3>
+            <h3 className="text-lg font-semibold text-white">Stock Reels</h3>
           </div>
           <div className="card-body">
             {operatorReels.length === 0 ? (
-              <p className="text-gray-400 text-center py-8">No reels currently assigned to operator.</p>
+              <p className="text-gray-400 text-center py-8">No reels currently in stock.</p>
             ) : (
               <div className="grid gap-4">
                 {operatorReels.map((reel) => (
