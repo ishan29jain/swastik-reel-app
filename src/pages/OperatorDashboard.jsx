@@ -23,6 +23,7 @@ const OperatorDashboard = () => {
   const [isLoading, setIsLoading] = useState({});
   const [selectedReel, setSelectedReel] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const operatorId = "operator01";
 
@@ -111,6 +112,11 @@ const OperatorDashboard = () => {
     fetchAssignedReels();
   };
 
+  // Filter reels based on search term
+  const filteredReels = reels.filter(reel => 
+    reel.reelNo.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="min-h-screen bg-gray-900">
       {/* Header */}
@@ -149,19 +155,42 @@ const OperatorDashboard = () => {
         {/* Stock Reels List */}
         <div className="mb-8">
           <h2 className="text-xl font-bold text-white mb-4">Stock Reels</h2>
-          {reels.length === 0 ? (
+          
+          {/* Search Bar */}
+          <div className="mb-6">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search by reel number..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full px-4 py-3 pl-10 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+              />
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          {filteredReels.length === 0 ? (
             <div className="card-body text-center py-12">
               <div className="h-16 w-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="h-8 w-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-medium text-white mb-2">No Stock Reels</h3>
-              <p className="text-gray-400">You don't have any reels assigned to you at the moment.</p>
+              <h3 className="text-lg font-medium text-white mb-2">
+                {searchTerm ? 'No matching reels found' : 'No Stock Reels'}
+              </h3>
+              <p className="text-gray-400">
+                {searchTerm ? 'Try a different reel number or clear the search.' : "You don't have any reels assigned to you at the moment."}
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {reels.map((reel) => (
+              {filteredReels.map((reel) => (
                 <div
                   key={reel.id}
                   className={`card cursor-pointer ${reel.inProgress ? 'bg-green-700 border-green-700' : 'hover:border-blue-400'}`}
