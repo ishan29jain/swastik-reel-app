@@ -375,8 +375,6 @@ const ManagerDashboard = () => {
                     <th>Ream Weight</th>
                     <th>Expected Reams</th>
                     <th>Actual Reams</th>
-                    <th>Yield %</th>
-                    <th>Loss %</th>
                   </tr>
                 </thead>
                 <tbody className="table-body">
@@ -389,16 +387,6 @@ const ManagerDashboard = () => {
                       <td className="table-cell">{reel.reamWeight}</td>
                       <td className="table-cell">{reel.expectedReams}</td>
                       <td className="table-cell">{reel.actualReams}</td>
-                      <td className="table-cell">
-                        <span className={`badge-${reel.color}`}>
-                          {reel.yieldPercent}%
-                        </span>
-                      </td>
-                      <td className="table-cell">
-                        <span className="text-sm text-gray-400">
-                          {reel.yieldLoss}%
-                        </span>
-                      </td>
                     </tr>
                   ))}
                 </tbody>

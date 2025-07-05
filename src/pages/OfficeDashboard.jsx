@@ -468,6 +468,7 @@ const OfficeDashboard = () => {
                     <th>Expected Reams</th>
                     <th>Actual Reams</th>
                     <th>Yield %</th>
+                    <th>Profit</th>
                     <th>Remarks</th>
                     <th>Ruled Date</th>
                     <th>Action</th>
@@ -486,6 +487,11 @@ const OfficeDashboard = () => {
                       <td className="table-cell">
                         <span className={`badge-${reel.color}`}>
                           {reel.yieldPercent}%
+                        </span>
+                      </td>
+                      <td className="table-cell">
+                        <span className="text-sm text-gray-400">
+                          {parseFloat(reel.yieldLoss) * -1}%
                         </span>
                       </td>
                       <td className="table-cell">
