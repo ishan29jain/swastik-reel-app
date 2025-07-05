@@ -30,27 +30,25 @@ const OperatorDashboard = () => {
   const operatorId = "operator01";
 
   const fetchAssignedReels = async () => {
+    // Use composite index for better performance
     const q = query(collection(db, "reels"), where("assignedTo", "==", operatorId), where("ruledDate", "==", null));
     const querySnapshot = await getDocs(q);
     const data = [];
     querySnapshot.forEach((docSnap) => {
       const r = docSnap.data();
-      if (!r.ruledDate) {
-        data.push({ id: docSnap.id, ...r });
-      }
+      data.push({ id: docSnap.id, ...r });
     });
     setReels(data);
   };
 
   const fetchCompletedReels = async () => {
+    // Use composite index for better performance
     const q = query(collection(db, "reels"), where("assignedTo", "==", operatorId), where("ruledDate", "!=", null));
     const querySnapshot = await getDocs(q);
     const data = [];
     querySnapshot.forEach((docSnap) => {
       const r = docSnap.data();
-      if (r.ruledDate) {
-        data.push({ id: docSnap.id, ...r });
-      }
+      data.push({ id: docSnap.id, ...r });
     });
     setCompletedReels(data);
   };
@@ -90,29 +88,61 @@ const OperatorDashboard = () => {
   const handleSubmit = async (e, reelId, reel) => {
     e.preventDefault();
     const data = formData[reelId];
-    if (!data?.outputReams || !data?.looseSheets || !data?.outputLength || !data?.outputWidth) {
-      setMessage("Please fill all fields.");
+    
+    // Better validation with more specific error messages
+    if (!data) {
+      setMessage("❌ Form data is missing. Please try again.");
+      return;
+    }
+    
+    if (!data.outputReams || data.outputReams === "") {
+      setMessage("❌ Please enter the number of reams produced.");
+      return;
+    }
+    
+    if (!data.looseSheets || data.looseSheets === "") {
+      setMessage("❌ Please enter the number of loose sheets.");
+      return;
+    }
+    
+    if (!data.outputLength || data.outputLength === "") {
+      setMessage("❌ Please enter the output length.");
+      return;
+    }
+    
+    if (!data.outputWidth || data.outputWidth === "") {
+      setMessage("❌ Please enter the output width.");
       return;
     }
 
     setIsLoading(prev => ({ ...prev, [reelId]: true }));
     setMessage("");
 
-    const length = parseFloat(data.outputLength);
-    const width = parseFloat(data.outputWidth);
-    const gsm = parseFloat(reel.gsm);
-    const reamWeight = parseFloat(((length * width * gsm) / 20000).toFixed(1));
-
     try {
+      const length = parseFloat(data.outputLength);
+      const width = parseFloat(data.outputWidth);
+      const gsm = parseFloat(reel.gsm);
+      
+      // Validate numeric values
+      if (isNaN(length) || isNaN(width) || isNaN(gsm)) {
+        throw new Error("Invalid numeric values in form data");
+      }
+      
+      const reamWeight = parseFloat(((length * width * gsm) / 20000).toFixed(1));
+
       const reelRef = doc(db, "reels", reelId);
-      await updateDoc(reelRef, {
+      const updateData = {
         outputReams: parseInt(data.outputReams),
         looseSheets: parseInt(data.looseSheets),
         outputLength: length,
         outputWidth: width,
         reamWeight,
         ruledDate: new Date().toISOString(),
-      });
+      };
+
+      console.log("Updating reel with data:", updateData); // Debug log
+      
+      await updateDoc(reelRef, updateData);
 
       setMessage(isEditMode ? "✅ Output updated for reel " + reel.reelNo : "✅ Output saved for reel " + reel.reelNo);
       await fetchAssignedReels(); // Refresh reels after save
@@ -121,8 +151,8 @@ const OperatorDashboard = () => {
       setSelectedReel(null);
       setIsEditMode(false);
     } catch (err) {
-      console.error(err);
-      setMessage("❌ Error saving output");
+      console.error("Error details:", err); // More detailed error logging
+      setMessage("❌ Error saving output: " + (err.message || "Unknown error"));
     } finally {
       setIsLoading(prev => ({ ...prev, [reelId]: false }));
     }
@@ -296,7 +326,7 @@ const OperatorDashboard = () => {
         </div>
 
         {/* Modal for Reel Details and Output Entry */}
-        {showModal && selectedReel && (
+        {showModal && selectedReel && (isEditMode || selectedReel.inProgress) && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
             <div className="bg-gray-800 rounded-lg shadow-lg w-full max-w-lg p-6 relative">
               <button
