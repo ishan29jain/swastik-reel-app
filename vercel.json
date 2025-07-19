@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/api/parse-pdf", "destination": "/pdf-backend/parse_pdf.py" }
+  ]
+} 
