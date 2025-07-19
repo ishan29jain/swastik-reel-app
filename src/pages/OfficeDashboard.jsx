@@ -259,7 +259,7 @@ const OfficeDashboard = () => {
       formData.append("file", file);
       setIsLoading(true);
       try {
-        const res = await fetch("http://localhost:8000/parse-pdf/", {
+        const res = await fetch("/api/parse-pdf", {
           method: "POST",
           body: formData,
         });
